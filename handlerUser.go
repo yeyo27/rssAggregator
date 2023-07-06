@@ -19,6 +19,7 @@ func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 		Name string `json:"name"`
 	}
 
+	// read params from request body
 	params := parameters{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&params)
@@ -47,4 +48,16 @@ func (apiCfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request, 
 	// we are going to use a middleware function which implements that logic.
 	// this way, we don't need to copy the auth part in every handler
 	respondWithJSON(w, 200, databaseUserToUser(user))
+}
+
+func (apiCfg apiConfig) handlerGetPostsByUser(w http.ResponseWriter, r *http.Request, user database.User) {
+	posts, err := apiCfg.DB.GetPostsByUser(r.Context(), database.GetPostsByUserParams{
+		UserID: user.ID,
+		Limit: 10,
+	})
+	if err != nil {
+		respondWithError(w, 402, fmt.Sprintf("Couldn't get posts: %v", err))
+		return
+	}
+	respondWithJSON(w, 200, databasePostsToPosts(posts))
 }
